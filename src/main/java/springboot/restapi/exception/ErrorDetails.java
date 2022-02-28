@@ -30,6 +30,7 @@ public class ErrorDetails {
     public String getDetails() {
         return details;
     }
+
     public String getStatus() {
         return status;
     }

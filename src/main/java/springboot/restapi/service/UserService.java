@@ -6,6 +6,7 @@ import springboot.restapi.model.User;
 import springboot.restapi.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 import java.util.*;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +20,7 @@ public class UserService implements  UserDetailsService{
     public org.springframework.security.core.userdetails.User loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + email);
+            throw new UsernameNotFoundException(ConstantVariables.USER_NOT_FOUND + email);
         }
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
     }
@@ -34,12 +35,12 @@ public class UserService implements  UserDetailsService{
         return user;
     }
 
-    public User saveUser(User userDetails) {
+    public User saveUser(@Valid User userDetails) {
         User user = userRepository.save(userDetails);
         return user;
     }
 
-    public User updateUser(Long id,User userDetails) {
+    public User updateUser(@Valid Long id, User userDetails) {
         User user = userRepository.findById(id).get();
         user.setLastName(userDetails.getLastName());
         user.setFirstName(userDetails.getFirstName());
@@ -52,7 +53,7 @@ public class UserService implements  UserDetailsService{
     public Map<String, Boolean> deleteUser(Long id) {
         Optional<User> user = getUser(id);
         Map<String, Boolean> response = new HashMap<>();
-        if (user!= null) {
+        if (user.isPresent()) {
             userRepository.delete(user.get());
             response.put(ConstantVariables.DELETE_KEY, Boolean.TRUE);
         } else {

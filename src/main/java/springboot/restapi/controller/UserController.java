@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
+import springboot.restapi.exception.MethodArgumentNotValid;
 import springboot.restapi.model.User;
 import springboot.restapi.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +14,7 @@ import springboot.restapi.exception.ResourceNotFoundException;
 import springboot.restapi.service.UserService;
 
 import java.util.*;
+
 import springboot.restapi.config.ConstantVariables;
 
 import javax.validation.Valid;
@@ -34,28 +36,28 @@ public class UserController {
     private PasswordEncoder bcryptEncoder;
 
     @GetMapping(ConstantVariables.USERS)
-    public List<User> getUsers()  {
+    public List<User> getUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping(ConstantVariables.GET_USER)
     public ResponseEntity<Optional<User>> getUser(@PathVariable Long id) throws ResourceNotFoundException {
-        Optional<User> user =  userService.getUser(id);
+        Optional<User> user = userService.getUser(id);
         if (user.isPresent()) return ResponseEntity.ok().body(user);
-        else throw new ResourceNotFoundException("Data Not found");
+        else throw new ResourceNotFoundException(ConstantVariables.DATA_NOT_FOUND);
     }
 
 
     @PostMapping(ConstantVariables.USERS)
-    public  ResponseEntity<Optional<User>> add(@Valid @RequestBody User user) throws Exception {
+    public ResponseEntity<Optional<User>> add(@Valid @RequestBody User user) throws  MethodArgumentNotValid {
         Optional<User> userSaved = Optional.ofNullable(userService.saveUser(user));
         if (userSaved.isPresent()) return ResponseEntity.ok().body(userSaved);
-        else throw new ResourceNotFoundException("Data Not Valid");
+        else throw new MethodArgumentNotValid(ConstantVariables.DATA_NOT_FOUND);
     }
 
     @PutMapping(ConstantVariables.GET_USER)
-    public ResponseEntity<User>  update(@Valid @PathVariable Long id, @RequestBody User userDetails) throws ResourceNotFoundException {
-        User userUpdated  =userService.updateUser(id, userDetails);
+    public ResponseEntity<User> update(@Valid @PathVariable Long id, @RequestBody User userDetails) throws ResourceNotFoundException {
+        User userUpdated = userService.updateUser(id, userDetails);
         return ResponseEntity.ok().body(userUpdated);
     }
 
@@ -67,9 +69,10 @@ public class UserController {
     @PostMapping(ConstantVariables.OTP_SEND)
     public Map<String, String> sendEmail(@RequestBody Map<String, String> json) {
         String email = json.get("email");
-        //verify is
+        //verify the user
         User user = userRepository.findByEmail(email);
         Map<String, String> response = new HashMap<>();
+
         if (user != null) {
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setTo(email);
@@ -88,6 +91,7 @@ public class UserController {
             response.put(ConstantVariables.MESSAGE_KEY, ConstantVariables.OTP_SEND_MESSAGE);
             return response;
         }
+
         response.put(ConstantVariables.MESSAGE_KEY, ConstantVariables.INVALID_EMAIL);
         return response;
     }
